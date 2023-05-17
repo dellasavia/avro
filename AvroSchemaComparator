@@ -1,11 +1,7 @@
 import org.apache.avro.Schema;
 import org.apache.avro.SchemaBuilder;
-import org.apache.avro.Schema.Field;
 import org.apache.avro.SchemaCompatibility;
 import org.apache.avro.SchemaCompatibility.SchemaCompatibilityType;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class AvroCompatibilityExample {
     public static void main(String[] args) {
@@ -20,17 +16,8 @@ public class AvroCompatibilityExample {
         if (compatibilityType == SchemaCompatibilityType.COMPATIBLE) {
             System.out.println("Schemas are compatible. No intermediate schema needed.");
         } else {
-            List<Field> fields = new ArrayList<>(oldSchema.getFields());
-
-            for (Field newField : newSchema.getFields()) {
-                if (!oldSchema.getField(newField.name()) != null) {
-                    fields.add(newField);
-                }
-            }
-
-            Schema intermediateSchema = Schema.createRecord(oldSchema.getName(), oldSchema.getDoc(), oldSchema.getNamespace(), false);
-            intermediateSchema.setFields(fields);
-
+            Schema intermediateSchema = SchemaBuilder.builder().record("IntermediateSchema")
+                    .fields().requiredString("name").endRecord();
             String intermediateSchemaString = intermediateSchema.toString();
             System.out.println("Intermediate Schema: " + intermediateSchemaString);
         }
