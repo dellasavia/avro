@@ -16,7 +16,7 @@ public class AvroSchemaComparator {
         // Compatibilidade entre os esquemas
         SchemaCompatibility.SchemaPairCompatibility compatibility = SchemaCompatibility.checkReaderWriterCompatibility(newSchema, oldSchema);
 
-        if (compatibility.getType() == SchemaCompatibilityType.COMPATIBLE || compatibility.getType() == SchemaCompatibilityType.COMPATIBLE_TRANSITIVE) {
+        if (compatibility.getType() == SchemaCompatibilityType.COMPATIBLE) {
             // Geração do esquema intermediário
             Schema intermediateSchema = generateIntermediateSchema(oldSchema, newSchema);
             System.out.println("Esquema intermediário: " + intermediateSchema.toString());
