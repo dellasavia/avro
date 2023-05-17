@@ -1,90 +1,38 @@
 import org.apache.avro.Schema;
+import org.apache.avro.SchemaBuilder;
+import org.apache.avro.Schema.Field;
 import org.apache.avro.SchemaCompatibility;
 import org.apache.avro.SchemaCompatibility.SchemaCompatibilityType;
-import org.apache.avro.Schema.Parser;
-import org.apache.avro.SchemaBuilder;
 
-import java.io.File;
-import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
-public class AvroSchemaComparator {
+public class AvroCompatibilityExample {
     public static void main(String[] args) {
-        // Esquema Avro original (versão anterior)
-        Schema oldSchema = new Parser().parse("{\"type\":\"record\",\"name\":\"Usuario\",\"fields\":[{\"name\":\"nome\",\"type\":\"string\"}]}");
+        String oldSchemaString = "{\"type\":\"record\",\"name\":\"User\",\"fields\":[{\"name\":\"name\",\"type\":\"string\"}]}";
+        String newSchemaString = "{\"type\":\"record\",\"name\":\"User\",\"fields\":[{\"name\":\"name\",\"type\":\"string\"},{\"name\":\"age\",\"type\":\"int\"}]}";
 
-        // Esquema Avro atualizado (versão nova)
-        Schema newSchema = new Parser().parse("{\"type\":\"record\",\"name\":\"Usuario\",\"fields\":[{\"name\":\"nome\",\"type\":\"string\"},{\"name\":\"idade\",\"type\":\"int\"}]}");
+        Schema oldSchema = new Schema.Parser().parse(oldSchemaString);
+        Schema newSchema = new Schema.Parser().parse(newSchemaString);
 
-        // Caminho para o arquivo do esquema intermediário
-        String intermediateSchemaPath = "path/to/intermediate-schema.avsc";
+        SchemaCompatibilityType compatibilityType = SchemaCompatibility.checkReaderWriterCompatibility(oldSchema, newSchema).getType();
 
-        // Verificar compatibilidade entre os esquemas
-        SchemaCompatibility.SchemaPairCompatibility compatibility = SchemaCompatibility.checkReaderWriterCompatibility(newSchema, oldSchema);
-
-        if (compatibility.getType() == SchemaCompatibilityType.COMPATIBLE) {
-            // Gerar o esquema intermediário
-            Schema intermediateSchema = generateIntermediateSchema(oldSchema, newSchema);
-
-            // Salvar o esquema intermediário em um arquivo
-            saveIntermediateSchema(intermediateSchema, intermediateSchemaPath);
-
-            System.out.println("Esquema intermediário gerado com sucesso: " + intermediateSchemaPath);
+        if (compatibilityType == SchemaCompatibilityType.COMPATIBLE) {
+            System.out.println("Schemas are compatible. No intermediate schema needed.");
         } else {
-            System.out.println("Os esquemas não são compatíveis.");
-        }
-    }
+            List<Field> fields = new ArrayList<>(oldSchema.getFields());
 
-    private static Schema generateIntermediateSchema(Schema oldSchema, Schema newSchema) {
-        return SchemaBuilder.builder().unionOf().nullType().and().type(oldSchema).and().type(newSchema).endUnion();
-    }
+            for (Field newField : newSchema.getFields()) {
+                if (!oldSchema.getField(newField.name()) != null) {
+                    fields.add(newField);
+                }
+            }
 
-    private static void saveIntermediateSchema(Schema intermediateSchema, String filePath) {
-        File file = new File(filePath);
-        try {
-            intermediateSchema.toJson(true);
-            intermediateSchema.toPrettyString();
-            intermediateSchema.toString(true);
-            intermediateSchema.toString();
-            intermediateSchema.getFields();
-            intermediateSchema.getAliases();
-            intermediateSchema.getProps();
-            intermediateSchema.getObjectProps();
-            intermediateSchema.getJsonProp("propName");
-            intermediateSchema.getJsonProps();
+            Schema intermediateSchema = Schema.createRecord(oldSchema.getName(), oldSchema.getDoc(), oldSchema.getNamespace(), false);
+            intermediateSchema.setFields(fields);
 
-            intermediateSchema.addAlias("alias");
-            intermediateSchema.addProp("propName", "propValue");
-
-            intermediateSchema.setAliases(null);
-            intermediateSchema.setProps(null);
-            intermediateSchema.setLogicalType(null);
-
-            intermediateSchema.getField("fieldName");
-            intermediateSchema.getFields();
-            intermediateSchema.getField("fieldName");
-            intermediateSchema.getFullName();
-            intermediateSchema.getJsonProp("propName");
-            intermediateSchema.getJsonProps();
-            intermediateSchema.getLogicalType();
-            intermediateSchema.getName();
-            intermediateSchema.getNamespace();
-            intermediateSchema.getObjectProps();
-            intermediateSchema.getProp("propName");
-            intermediateSchema.getProps();
-            intermediateSchema.getSchemaProp("propName");
-            intermediateSchema.getSchemaProps();
-            intermediateSchema.getTypes();
-            intermediateSchema.getType();
-
-            intermediateSchema.toString(true);
-            intermediateSchema.toString();
-            intermediateSchema.toJson(true);
-            intermediateSchema.toJson();
-            intermediateSchema.toPrettyString();
-        } catch (IOException e) {
-            System.out.println("Erro ao salvar o esquema intermediário.");
-            e.printStackTrace();
+            String intermediateSchemaString = intermediateSchema.toString();
+            System.out.println("Intermediate Schema: " + intermediateSchemaString);
         }
     }
 }
-
