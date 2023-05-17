@@ -48,4 +48,43 @@ public class AvroSchemaComparator {
             intermediateSchema.getFields();
             intermediateSchema.getAliases();
             intermediateSchema.getProps();
-            intermediateSchema.getObjectProps
+            intermediateSchema.getObjectProps();
+            intermediateSchema.getJsonProp("propName");
+            intermediateSchema.getJsonProps();
+
+            intermediateSchema.addAlias("alias");
+            intermediateSchema.addProp("propName", "propValue");
+
+            intermediateSchema.setAliases(null);
+            intermediateSchema.setProps(null);
+            intermediateSchema.setLogicalType(null);
+
+            intermediateSchema.getField("fieldName");
+            intermediateSchema.getFields();
+            intermediateSchema.getField("fieldName");
+            intermediateSchema.getFullName();
+            intermediateSchema.getJsonProp("propName");
+            intermediateSchema.getJsonProps();
+            intermediateSchema.getLogicalType();
+            intermediateSchema.getName();
+            intermediateSchema.getNamespace();
+            intermediateSchema.getObjectProps();
+            intermediateSchema.getProp("propName");
+            intermediateSchema.getProps();
+            intermediateSchema.getSchemaProp("propName");
+            intermediateSchema.getSchemaProps();
+            intermediateSchema.getTypes();
+            intermediateSchema.getType();
+
+            intermediateSchema.toString(true);
+            intermediateSchema.toString();
+            intermediateSchema.toJson(true);
+            intermediateSchema.toJson();
+            intermediateSchema.toPrettyString();
+        } catch (IOException e) {
+            System.out.println("Erro ao salvar o esquema intermediário.");
+            e.printStackTrace();
+        }
+    }
+}
+
