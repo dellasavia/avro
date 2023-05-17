@@ -1,25 +1,36 @@
 import org.apache.avro.Schema;
-import org.apache.avro.SchemaBuilder;
 import org.apache.avro.SchemaCompatibility;
 import org.apache.avro.SchemaCompatibility.SchemaCompatibilityType;
 
 public class AvroCompatibilityExample {
-    public static void main(String[] args) {
-        String oldSchemaString = "{\"type\":\"record\",\"name\":\"User\",\"fields\":[{\"name\":\"name\",\"type\":\"string\"}]}";
-        String newSchemaString = "{\"type\":\"record\",\"name\":\"User\",\"fields\":[{\"name\":\"name\",\"type\":\"string\"},{\"name\":\"age\",\"type\":\"int\"}]}";
 
+    public static void main(String[] args) {
+        // Esquema Avro antigo
+        String oldSchemaString = "{\"type\":\"record\",\"name\":\"Person\",\"fields\":[{\"name\":\"name\",\"type\":\"string\"}]}";
+
+        // Esquema Avro novo com campos adicionais
+        String newSchemaString = "{\"type\":\"record\",\"name\":\"Person\",\"fields\":[{\"name\":\"name\",\"type\":\"string\"},{\"name\":\"age\",\"type\":\"int\"}]}";
+
+        // Converter strings em objetos Schema
         Schema oldSchema = new Schema.Parser().parse(oldSchemaString);
         Schema newSchema = new Schema.Parser().parse(newSchemaString);
 
-        SchemaCompatibilityType compatibilityType = SchemaCompatibility.checkReaderWriterCompatibility(oldSchema, newSchema).getType();
+        // Verificar a compatibilidade entre os esquemas
+        SchemaCompatibility.SchemaPairCompatibility compatibility = SchemaCompatibility.checkReaderWriterCompatibility(oldSchema, newSchema);
 
-        if (compatibilityType == SchemaCompatibilityType.COMPATIBLE) {
-            System.out.println("Schemas are compatible. No intermediate schema needed.");
+        if (compatibility.getType() == SchemaCompatibilityType.COMPATIBLE) {
+            // Os esquemas são compatíveis, não é necessário um esquema intermediário
+            System.out.println("Os esquemas são compatíveis.");
         } else {
-            Schema intermediateSchema = SchemaBuilder.builder().record("IntermediateSchema")
-                    .fields().requiredString("name").endRecord();
+            // Gerar um esquema intermediário
+            Schema intermediateSchema = compatibility.getCompatibilityResult().getModifiedSchema();
+
+            // Converter o esquema intermediário em uma string
             String intermediateSchemaString = intermediateSchema.toString();
-            System.out.println("Intermediate Schema: " + intermediateSchemaString);
+
+            // Exibir o esquema intermediário
+            System.out.println("Esquema intermediário:");
+            System.out.println(intermediateSchemaString);
         }
     }
 }
