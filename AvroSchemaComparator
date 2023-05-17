@@ -1,6 +1,5 @@
 import org.apache.avro.Schema;
-import org.apache.avro.SchemaCompatibility;
-import org.apache.avro.SchemaCompatibility.SchemaCompatibilityType;
+import org.apache.avro.SchemaBuilder;
 
 public class AvroCompatibilityExample {
 
@@ -15,22 +14,36 @@ public class AvroCompatibilityExample {
         Schema oldSchema = new Schema.Parser().parse(oldSchemaString);
         Schema newSchema = new Schema.Parser().parse(newSchemaString);
 
-        // Verificar a compatibilidade entre os esquemas
-        SchemaCompatibility.SchemaPairCompatibility compatibility = SchemaCompatibility.checkReaderWriterCompatibility(oldSchema, newSchema);
+        // Gerar um esquema intermediário personalizado
+        Schema intermediateSchema = generateIntermediateSchema(oldSchema, newSchema);
 
-        if (compatibility.getType() == SchemaCompatibilityType.COMPATIBLE) {
-            // Os esquemas são compatíveis, não é necessário um esquema intermediário
-            System.out.println("Os esquemas são compatíveis.");
-        } else {
-            // Gerar um esquema intermediário
-            Schema intermediateSchema = compatibility.getCompatibilityResult().getModifiedSchema();
+        // Converter o esquema intermediário em uma string
+        String intermediateSchemaString = intermediateSchema.toString();
 
-            // Converter o esquema intermediário em uma string
-            String intermediateSchemaString = intermediateSchema.toString();
+        // Exibir o esquema intermediário
+        System.out.println("Esquema intermediário:");
+        System.out.println(intermediateSchemaString);
+    }
 
-            // Exibir o esquema intermediário
-            System.out.println("Esquema intermediário:");
-            System.out.println(intermediateSchemaString);
+    private static Schema generateIntermediateSchema(Schema oldSchema, Schema newSchema) {
+        // Construir um novo esquema intermediário usando o SchemaBuilder
+        SchemaBuilder.FieldAssembler<Schema> fieldAssembler = SchemaBuilder.record("Intermediate")
+                .fields();
+
+        // Adicionar os campos do esquema antigo ao esquema intermediário
+        for (Schema.Field field : oldSchema.getFields()) {
+            fieldAssembler = fieldAssembler.name(field.name()).type(field.schema()).noDefault();
         }
+
+        // Adicionar os campos do esquema novo ao esquema intermediário, ignorando campos em conflito
+        for (Schema.Field field : newSchema.getFields()) {
+            if (!oldSchema.getField(field.name()).isPresent()) {
+                fieldAssembler = fieldAssembler.name(field.name()).type(field.schema()).noDefault();
+            }
+        }
+
+        // Finalizar a construção do esquema intermediário
+        Schema intermediateSchema = fieldAssembler.endRecord();
+        return intermediateSchema;
     }
 }
