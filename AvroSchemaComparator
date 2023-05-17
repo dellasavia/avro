@@ -1,0 +1,45 @@
+import org.apache.avro.Schema;
+import org.apache.avro.SchemaCompatibility;
+import org.apache.avro.SchemaCompatibility.SchemaCompatibilityType;
+
+import java.util.ArrayList;
+import java.util.List;
+
+public class AvroSchemaComparator {
+    public static void main(String[] args) {
+        // Esquema Avro original (versão anterior)
+        Schema oldSchema = new Schema.Parser().parse("{\"type\":\"record\",\"name\":\"Usuario\",\"fields\":[{\"name\":\"nome\",\"type\":\"string\"}]}");
+
+        // Esquema Avro atualizado (versão nova)
+        Schema newSchema = new Schema.Parser().parse("{\"type\":\"record\",\"name\":\"Usuario\",\"fields\":[{\"name\":\"nome\",\"type\":\"string\"},{\"name\":\"idade\",\"type\":\"int\"}]}");
+
+        // Compatibilidade entre os esquemas
+        SchemaCompatibility.SchemaPairCompatibility compatibility = SchemaCompatibility.checkReaderWriterCompatibility(newSchema, oldSchema);
+
+        if (compatibility.getType() == SchemaCompatibilityType.COMPATIBLE || compatibility.getType() == SchemaCompatibilityType.COMPATIBLE_TRANSITIVE) {
+            // Geração do esquema intermediário
+            Schema intermediateSchema = generateIntermediateSchema(oldSchema, newSchema);
+            System.out.println("Esquema intermediário: " + intermediateSchema.toString());
+        } else {
+            System.out.println("Os esquemas não são compatíveis.");
+        }
+    }
+
+    private static Schema generateIntermediateSchema(Schema oldSchema, Schema newSchema) {
+        List<Schema.Field> intermediateFields = new ArrayList<>();
+
+        // Adicionar campos existentes no oldSchema ao esquema intermediário
+        for (Schema.Field field : oldSchema.getFields()) {
+            intermediateFields.add(new Schema.Field(field.name(), field.schema(), field.doc(), field.defaultVal(), field.order()));
+        }
+
+        // Adicionar campos adicionais presentes no newSchema ao esquema intermediário
+        for (Schema.Field field : newSchema.getFields()) {
+            if (!oldSchema.getField(field.name()).isPresent()) {
+                intermediateFields.add(new Schema.Field(field.name(), field.schema(), field.doc(), field.defaultVal(), field.order()));
+            }
+        }
+
+        return Schema.createRecord("Intermediate", null, null, false, intermediateFields);
+    }
+}
